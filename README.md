@@ -2,7 +2,7 @@
 
 ## Bot
 
-### level and ranj command
+### level and rank command
 
 ### TODO: Add slash commands
 
