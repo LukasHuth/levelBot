@@ -2,7 +2,7 @@
   "name": "levelbot",
   "version": "1.0.0",
   "description": "Discord Level Bot With API",
-  "main": "api.js",
+  "main": "server.js",
   "scripts": {
     "test": "node bot.js",
     "server": "node server.js",
@@ -26,7 +26,11 @@
   "dependencies": {
     "axios": "^0.21.1",
     "canvas": "^2.8.0",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "discord.js": "^12.5.3",
+    "express": "^4.17.1",
     "fs": "0.0.1-security",
     "path": "^0.12.7",
     "request": "^2.88.2"
