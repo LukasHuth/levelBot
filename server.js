@@ -35,11 +35,12 @@ app.all("/v1/user/:server/:id", (req, res, method) => {
         var data = JSON.parse(fs.readFileSync("./userdata.json"));
         if(!data.hasOwnProperty(server+'')) data[server+''] = {};
         if(data[server+''].hasOwnProperty(id+'')) {
-            data[server+''][id+'']["required"] = 100*data[id+'']["level"];
-            data[server+''][id+'']["missing"] = data[id+'']['xp'];
-            for(i = 1; i <= data[id+''].level-1;i++) {
+            data[server+''][id+'']["required"] = 100*data[server+''][id+'']["level"];
+            data[server+''][id+'']["missing"] = data[server+''][id+'']['xp'];
+            for(i = 1; i <= data[server+''][id+''].level-1;i++) {
                 data[server+''][id+'']['missing']-=100*i;
             }
+            data[server+''][id+'']['missing'] = data[server+''][id+'']['required']-data[server+''][id+'']['missing']
             data[server+''][id+'']["rank"] = 1;
             for(elm in data[server+'']) {
                 if(elm != id+'') {
@@ -49,8 +50,7 @@ app.all("/v1/user/:server/:id", (req, res, method) => {
                     }
                 }
             }
-            index = data[server+''][id+''].indexOf("last");
-            data[server+''][id+''].splice(index, 1);
+            delete data[server+''][id+'']["last"];
             res.status(200).send(data[server+''][id+'']);
         } else {
             data[server+''][id+''] = {};
@@ -91,12 +91,22 @@ app.all("/v1/user/:server/:id", (req, res, method) => {
         }
         const _time = new Date()
         const time = _time.getTime();
-        const tm20 = time - ((20*60)*1000);
+        // const tm20 = time - ((60)*1000);
+        const tm20 = time - ((1)*1000);
         if(data[server+''][id+'']["last"] < tm20) {
             xp = Math.floor(Math.random()*(sv[server+'']["max"] - sv[server+'']["min"]));
             xp+=sv[server+'']["min"];
             data[server+''][id+'']["last"] = time;
+            data[server+''][id+'']["xp"] += xp;
+            missing = data[server+''][id+'']['xp'];
+            for(i = 1; i <= data[server+''][id+''].level-1;i++) {
+                missing-=100*i;
+            }
+            missing = (data[server+''][id+'']['level']*100)-missing;
+            if(missing <= 0) data[server+''][id+'']['level']++;
             fs.writeFileSync("./userdata.json", JSON.stringify(data));
+            res.status(200).send();
+            return;
         }
     }
     res.status(400).send();
