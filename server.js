@@ -28,44 +28,76 @@ Status Codes:
 
 // start Server
 
-app.all("/v1/user/:id", (req, res, method) => {
+app.all("/v1/user/:server/:id", (req, res, method) => {
     console.log(req.method);
     if(req.method == 'GET') {
-        const { id } = req.params;
+        const { server, id } = req.params;
         var data = JSON.parse(fs.readFileSync("./userdata.json"));
-        if(data.hasOwnProperty(id+'')) {
-            data[id+'']["required"] = 100*data[id+'']["level"];
-            data[id+'']["missing"] = data[id+'']['xp'];
+        if(!data.hasOwnProperty(server+'')) data[server+''] = {};
+        if(data[server+''].hasOwnProperty(id+'')) {
+            data[server+''][id+'']["required"] = 100*data[id+'']["level"];
+            data[server+''][id+'']["missing"] = data[id+'']['xp'];
             for(i = 1; i <= data[id+''].level-1;i++) {
-                data[id+'']['missing']-=100*i;
+                data[server+''][id+'']['missing']-=100*i;
             }
-            data[id+'']["rank"] = 1;
-            for(elm in data) {
+            data[server+''][id+'']["rank"] = 1;
+            for(elm in data[server+'']) {
                 if(elm != id+'') {
                     // console.log(elm, id+'');
-                    if(data[elm]["xp"] > data[id+'']["xp"]) {
-                        data[id+'']["rank"]++;
+                    if(data[server+''][elm]["xp"] > data[server+''][id+'']["xp"]) {
+                        data[server+''][id+'']["rank"]++;
                     }
                 }
             }
-            res.status(200).send(data[id+'']);
+            index = data[server+''][id+''].indexOf("last");
+            data[server+''][id+''].splice(index, 1);
+            res.status(200).send(data[server+''][id+'']);
         } else {
-            data[id+''] = {};
+            data[server+''][id+''] = {};
             // "level": 7,
             // "xp": 2650,
             // "missing": 150,
             // "rank": 1,
             // "required": 400
-            data[id+'']["level"] = 1;
-            data[id+'']["xp"] = 0;
+            data[server+''][id+'']["level"] = 1;
+            data[server+''][id+'']["xp"] = 0;
+            const last = 0;
+            data[server+''][id+'']["last"] = last;
             fs.writeFileSync("./userdata.json", JSON.stringify(data));
-            data[id+'']["missing"] = 100;
-            data[id+'']["rank"] = -1;
-            data[id+'']["required"] = 100;
+            data[server+''][id+'']["missing"] = 100;
+            data[server+''][id+'']["rank"] = -1;
+            data[server+''][id+'']["required"] = 100;
             res.status(200).send(data[id+'']);
             // res.status(404).send();
         }
         return;
+    }
+    if(req.method == 'PUT') {
+        const { server, id } = req.params;
+        var data = JSON.parse(fs.readFileSync("./userdata.json"));
+        var sv = JSON.parse(fs.readFileSync("./serversettings.json"));
+        if(!sv.hasOwnProperty(server+'')) {
+            sv[server+''] = {};
+            sv[server+'']['min'] = 10;
+            sv[server+'']['max'] = 15;
+        }
+        if(!data.hasOwnProperty(server+'')) data[server+''] = {};
+        if(!data[server+''].hasOwnProperty(id+'')) {
+            data[server+''][id+''] = {};
+            data[server+''][id+'']["level"] = 1;
+            data[server+''][id+'']["xp"] = 0;
+            const last = 0;
+            data[server+''][id+'']["last"] = last;
+        }
+        const _time = new Date()
+        const time = _time.getTime();
+        const tm20 = time - ((20*60)*1000);
+        if(data[server+''][id+'']["last"] < tm20) {
+            xp = Math.floor(Math.random()*(sv[server+'']["max"] - sv[server+'']["min"]));
+            xp+=sv[server+'']["min"];
+            data[server+''][id+'']["last"] = time;
+            fs.writeFileSync("./userdata.json", JSON.stringify(data));
+        }
     }
     res.status(400).send();
 })
