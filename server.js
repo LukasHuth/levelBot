@@ -15,6 +15,7 @@ app.use(express.json());
 Status Codes:
 200: OK
 201: Created
+202: Accepted
 204: Existing
 400: Bad Reqest
 401: Unauthorized
@@ -29,7 +30,7 @@ Status Codes:
 // start Server
 
 app.all("/v1/user/:server/:id", (req, res, method) => {
-    console.log(req.method);
+    // console.log(req.method);
     if(req.method == 'GET') {
         const { server, id } = req.params;
         var data = JSON.parse(fs.readFileSync("./userdata.json"));
@@ -67,7 +68,7 @@ app.all("/v1/user/:server/:id", (req, res, method) => {
             data[server+''][id+'']["missing"] = 100;
             data[server+''][id+'']["rank"] = -1;
             data[server+''][id+'']["required"] = 100;
-            res.status(200).send(data[id+'']);
+            res.status(200).send(data[server+''][id+'']);
             // res.status(404).send();
         }
         return;
@@ -80,6 +81,7 @@ app.all("/v1/user/:server/:id", (req, res, method) => {
             sv[server+''] = {};
             sv[server+'']['min'] = 10;
             sv[server+'']['max'] = 15;
+            fs.writeFileSync("./serversettings.json", JSON.stringify(sv));
         }
         if(!data.hasOwnProperty(server+'')) data[server+''] = {};
         if(!data[server+''].hasOwnProperty(id+'')) {
@@ -105,9 +107,14 @@ app.all("/v1/user/:server/:id", (req, res, method) => {
             missing = (data[server+''][id+'']['level']*100)-missing;
             if(missing <= 0) data[server+''][id+'']['level']++;
             fs.writeFileSync("./userdata.json", JSON.stringify(data));
+            if(missing <= 0) {
+                res.status(202).send({level: data[server+''][id+'']['level']});
+                return;
+            }
             res.status(200).send();
             return;
         }
+        res.status(200).send();
     }
     res.status(400).send();
 })
